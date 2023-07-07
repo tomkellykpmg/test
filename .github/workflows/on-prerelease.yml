@@ -1,0 +1,74 @@
+
+on:
+  release:
+    types: [published]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v3
+
+      - name: Format Plan
+        id: fplan
+        if: ${{ github.event_name == 'pull_request' || github.event.release.prerelease }}
+        run: |
+          echo "tf_plan<<EOF" >> $GITHUB_OUTPUT
+          echo testing this stuff >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Plan output
+        uses: actions/github-script@v6
+        id: planout
+        if: ${{ github.event_name == 'pull_request' || github.event.release.prerelease }}
+        with:
+          result-encoding: string
+          script: |
+            const output = `#### Terraform Validation 🤖
+            #### Terraform Plan 📖
+            <details>
+            <summary>Show Plan for</summary>
+
+            \`\`\`
+            ${process.env.TFPLAN}
+            \`\`\`
+
+            </details>
+            **Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`**`;
+            return output
+        env:
+          TFPLAN: ${{ steps.fplan.outputs.tf_plan }}
+
+      - name: Checkout Wiki
+        if: ${{ github.event.release.prerelease }}
+        uses: actions/checkout@v3
+        with:
+          repository: ${{github.repository}}.wiki
+          path: wiki
+
+      - name: Add plan to release wiki
+        if: ${{ github.event.release.prerelease }}
+        run: |
+          cd wiki && \
+          echo ${{steps.planout.outputs.result}} > ${{ github.ref_name }}-test-plan.md &&\
+
+      - name: Add and commit
+        if: ${{ github.event.release.prerelease }}
+        run: cd ./wiki && git add . && git commit -m "Added release ${{ github.ref_name}}"
+        env:
+          GIT_AUTHOR_EMAIL: test@test.co.uk
+          GIT_AUTHOR_NAME: test
+          GIT_COMMITTER_EMAIL: test@test.co.uk
+          GIT_COMMITTER_NAME: test
+
+      - name: Push Branch to GitHub
+        if: ${{ github.event.release.prerelease }}
+        run: |-
+          cd ./wiki && git push \
+            --set-upstream "origin" \
+            "HEAD:refs/heads/main"
+        env:
+          GIT_AUTHOR_EMAIL: test@test.co.uk
+          GIT_AUTHOR_NAME: test
+          GIT_COMMITTER_EMAIL: test@test.co.uk
+          GIT_COMMITTER_NAME: test
