@@ -50,7 +50,7 @@ jobs:
         if: ${{ github.event.release.prerelease }}
         run: |
           cd wiki && \
-          echo ${{steps.planout.outputs.result}} > ${{ github.ref_name }}-test-plan.md &&\
+          { echo '${{steps.planout.outputs.result}}' } > ${{ github.ref_name }}-test-plan.md
 
       - name: Add and commit
         if: ${{ github.event.release.prerelease }}
