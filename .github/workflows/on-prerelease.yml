@@ -43,7 +43,7 @@ jobs:
         if: ${{ github.event.release.prerelease }}
         uses: actions/checkout@v3
         with:
-          repository: ${{github.repository}}.wiki
+          repository: ${{github.repository}}.wiki.git
           path: wiki
 
       - name: Add plan to release wiki
